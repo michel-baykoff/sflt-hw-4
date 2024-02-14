@@ -30,9 +30,6 @@
 *3. Скриншот страницы, которая открылась при запросе IP-адреса балансировщика.*
 
 ### Решение 1
-1. ![Balancer](img/balancer.png)
-2. ![Target group](img/target_group.png)
+2.1. ![Balancer](img/balancer.png)
+2.2. ![Target group](img/target_group.png)
 3. ![Page](img/page.png)
----
-
-![Название скриншота](ссылка на скриншот)
