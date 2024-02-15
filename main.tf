@@ -12,24 +12,18 @@ provider "yandex" {
 }
 
 
-resource "yandex_compute_disk" "boot-disk-1" {
-  name     = "boot-disk-1"
+resource "yandex_compute_disk" "boot-disk" {
+  count=2
+  name     = "boot-disk-${count.index}"
   type     = "network-hdd"
   zone     = "ru-central1-a"
   size     = "20"
   image_id = "fd80sfcd16u3pv7sveh1"
 }
 
-resource "yandex_compute_disk" "boot-disk-2" {
-  name     = "boot-disk-2"
-  type     = "network-hdd"
-  zone     = "ru-central1-a"
-  size     = "20"
-  image_id = "fd80sfcd16u3pv7sveh1"
-}
-
-resource "yandex_compute_instance" "nginx1" {
-  name = "nginx1"
+resource "yandex_compute_instance" "nginx" {
+  count=2
+  name = "nginx${count.index}"
 
   resources {
     cores  = 2
@@ -37,33 +31,7 @@ resource "yandex_compute_instance" "nginx1" {
   }
 
   boot_disk {
-    disk_id = yandex_compute_disk.boot-disk-1.id
-  }
-
-  network_interface {
-    subnet_id = yandex_vpc_subnet.subnet-1.id
-    nat       = true
-  }
-
-  metadata = {
-    ssh-keys = "${file("./meta.yaml")}"
-  }
-
-  scheduling_policy {
-    preemptible = true
-  }
-}
-
-resource "yandex_compute_instance" "nginx2" {
-  name = "nginx2"
-
-  resources {
-    cores  = 2
-    memory = 2
-  }
-
-  boot_disk {
-    disk_id = yandex_compute_disk.boot-disk-2.id
+    disk_id = yandex_compute_disk.boot-disk[count.index].id
   }
 
   network_interface {
@@ -96,11 +64,11 @@ resource "yandex_lb_target_group" "nginx-tg" {
   name      = "nginx"
   target {
     subnet_id = "${yandex_vpc_subnet.subnet-1.id}"
-    address   = "${yandex_compute_instance.nginx1.network_interface.0.ip_address}"
+    address   = "${yandex_compute_instance.nginx[0].network_interface.0.ip_address}"
   }
   target {
     subnet_id = "${yandex_vpc_subnet.subnet-1.id}"
-    address   = "${yandex_compute_instance.nginx2.network_interface.0.ip_address}"
+    address   = "${yandex_compute_instance.nginx[1].network_interface.0.ip_address}"
   }
 }
 
@@ -124,21 +92,4 @@ resource "yandex_lb_network_load_balancer" "nginx-lb" {
       }
     }
   }
-}
-
-
-output "internal_ip_address_nginx1" {
-  value = yandex_compute_instance.nginx1.network_interface.0.ip_address
-}
-
-output "internal_ip_address_nginx2" {
-  value = yandex_compute_instance.nginx2.network_interface.0.ip_address
-}
-
-output "external_ip_address_nginx1" {
-  value = yandex_compute_instance.nginx1.network_interface.0.nat_ip_address
-}
-
-output "external_ip_address_nginx2" {
-  value = yandex_compute_instance.nginx2.network_interface.0.nat_ip_address
 }
